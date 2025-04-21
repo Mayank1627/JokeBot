@@ -24,7 +24,7 @@ def chat():
     user_input = request.json.get('message')
     try:
         response = model.generate_content(
-            "You are JOKEGPT. Respond ONLY with jokes to: and must be different everytime" + user_input
+           user_input
         )
         return jsonify({'response': response.text})
     except Exception as e:
