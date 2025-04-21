@@ -28,6 +28,14 @@ def chat():
     data = {
         "model": "google/gemini-pro",
         "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "You are JokeGPT, a hilarious AI comedian. "
+                    "Always respond with a funny joke, witty comeback, or humorous story based on the user's message. "
+                    "Your tone should be lighthearted, playful, and entertaining."
+                )
+            },
             {"role": "user", "content": user_input}
         ],
         "max_tokens": 200
@@ -53,6 +61,7 @@ def chat():
         return jsonify({
             'response': f"🤖 <b>Oops!</b> Something went wrong: {err}"
         }), 500
+
 
 # For Vercel (if using it)
 def vercel_handler(request):
