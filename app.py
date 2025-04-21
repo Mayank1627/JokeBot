@@ -1,20 +1,14 @@
 from flask import Flask, render_template, request, jsonify
-import google.generativeai as genai
-from dotenv import load_dotenv
+import requests
 import os
-import time
-import re
+from dotenv import load_dotenv
 
-# Load API key ONLY from .env
+# Load OpenRouter API Key from .env
 load_dotenv()
-api_key = os.getenv("GEMINI_API_KEY")  # No fallbacks
+api_key = os.getenv("OPENROUTER_API_KEY")
 
 if not api_key:
-    raise ValueError("API key missing - add GEMINI_API_KEY to .env")
-
-# Configure Gemini (using 1.0 Pro for better free tier limits)
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-pro')
+    raise ValueError("Missing OPENROUTER_API_KEY in environment variables!")
 
 app = Flask(__name__)
 
@@ -25,35 +19,42 @@ def home():
 @app.route('/chat', methods=['POST'])
 def chat():
     user_input = request.json.get('message')
-    
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "google/gemini-pro",
+        "messages": [
+            {"role": "user", "content": user_input}
+        ],
+        "max_tokens": 200
+    }
+
     try:
-        # Attempt API call with timeout
-        response = model.generate_content(
-            user_input,
-            request_options={'timeout': 10}  # 10-second timeout
-        )
-        return jsonify({'response': response.text})
-        
-    except Exception as e:
-        error_msg = str(e)
-        
-        # Handle rate limits with humor
-        if "429" in error_msg:
-            wait_time = re.search(r'retry_delay.*?(\d+)', error_msg)
+        response = requests.post("https://openrouter.ai/api/v1/chat/completions",
+                                 headers=headers, json=data)
+        response.raise_for_status()
+        output = response.json()
+        return jsonify({'response': output['choices'][0]['message']['content']})
+
+    except requests.exceptions.HTTPError as http_err:
+        if response.status_code == 429:
             return jsonify({
-                'response': f"🎤 <b>Comedy Club Rules:</b> Only 2 jokes/minute allowed! "
-                          f"Wait {wait_time.group(1) if wait_time else '30'} seconds "
-                          f"before your next performance!",
-                'wait_seconds': int(wait_time.group(1)) if wait_time else 30
+                'response': "🎤 <b>Too many requests:</b> You're telling jokes too fast! Slow down! ⏳",
             }), 429
-            
-        # General error handling    
         return jsonify({
-            'response': "🤖 <b>Technical Difficulties:</b> My joke circuits are overloaded! "
-                       "Try again in a moment!"
+            'response': f"❌ <b>Error:</b> {http_err}"
         }), 500
 
-# Vercel handler remains unchanged
+    except Exception as err:
+        return jsonify({
+            'response': f"🤖 <b>Oops!</b> Something went wrong: {err}"
+        }), 500
+
+# For Vercel (if using it)
 def vercel_handler(request):
     with app.app_context():
         return app.full_dispatch_request()()
