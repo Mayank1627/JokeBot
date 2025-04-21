@@ -333,6 +333,7 @@
                 }
             });
         });
+
         chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const message = userInput.value.trim();
@@ -342,12 +343,10 @@
     userInput.value = '';
     
     const typingElement = showTypingIndicator();
-    
-    // Set timeout for funny message
     const jokeTimeout = setTimeout(() => {
         hideTypingIndicator();
-        addMessage("Why did the AI cross the road? To deliver this joke... but it's stuck in digital traffic! 🚦 Try again!", false);
-    }, 10000); // 10 seconds
+        addMessage("Why did the AI cross the road? To deliver this joke... but it's stuck in digital traffic! 🚦 Try again soon!", false);
+    }, 10000);
 
     try {
         const response = await fetch('/chat', {
@@ -358,21 +357,30 @@
             body: JSON.stringify({ message })
         });
 
-        clearTimeout(jokeTimeout); // Cancel if response arrives
+        clearTimeout(jokeTimeout);
         const data = await response.json();
         hideTypingIndicator();
         
         if (data.error) {
-            addMessage(`Oops! ${data.error}`, false);
+            // Handle rate limits humorously
+            if (data.error.includes('429') || data.error.includes('quota')) {
+                addMessage("Whoops! I've been telling jokes too fast and got temporarily banned from the comedy club! 🎤⚡<br><br>Server says: <i>'Please wait " + 
+                    (data.error.match(/retry_delay.*?(\d+)/)?.[1] || '30') + 
+                    " seconds before your next performance.'</i><br><br>Try again in a bit!", false);
+            } else {
+                addMessage(`Oops! The joke machine malfunctioned: ${data.error}`, false);
+            }
         } else {
             addMessage(data.response, false);
         }
     } catch (error) {
         clearTimeout(jokeTimeout);
         hideTypingIndicator();
-        addMessage("My joke generator is currently telling knock-knock jokes to a very slow turtle... 🐢 Try again!", false);
+        addMessage("My joke generator is currently:<br>• Doing stand-up for snails 🐌<br>• Rehearsing with sloths 🦥<br>• Will be back faster than a dad joke!<br><br>Try again soon!", false);
     }
 });
+
+    
     </script>
 </body>
 </html>
