@@ -14,7 +14,7 @@ if not api_key:
 
 # Configure Gemini (using 1.0 Pro for better free tier limits)
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-1.5-pro-latest')  # Switched from 1.5-pro-latest
+model = genai.GenerativeModel('gemini-pro')
 
 app = Flask(__name__)
 
