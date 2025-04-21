@@ -333,6 +333,46 @@
                 }
             });
         });
+        chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = userInput.value.trim();
+    if (!message) return;
+
+    addMessage(message, true);
+    userInput.value = '';
+    
+    const typingElement = showTypingIndicator();
+    
+    // Set timeout for funny message
+    const jokeTimeout = setTimeout(() => {
+        hideTypingIndicator();
+        addMessage("Why did the AI cross the road? To deliver this joke... but it's stuck in digital traffic! 🚦 Try again!", false);
+    }, 10000); // 10 seconds
+
+    try {
+        const response = await fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message })
+        });
+
+        clearTimeout(jokeTimeout); // Cancel if response arrives
+        const data = await response.json();
+        hideTypingIndicator();
+        
+        if (data.error) {
+            addMessage(`Oops! ${data.error}`, false);
+        } else {
+            addMessage(data.response, false);
+        }
+    } catch (error) {
+        clearTimeout(jokeTimeout);
+        hideTypingIndicator();
+        addMessage("My joke generator is currently telling knock-knock jokes to a very slow turtle... 🐢 Try again!", false);
+    }
+});
     </script>
 </body>
 </html>
