@@ -6,56 +6,107 @@
     <title>JokeGPT - AI Comedy Companion</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        body {
+            font-family: 'Comic Neue', cursive;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
         #chat-container::-webkit-scrollbar {
             width: 8px;
         }
+        
         #chat-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: rgba(255,255,255,0.3);
             border-radius: 10px;
         }
+        
         #chat-container::-webkit-scrollbar-thumb {
-            background: #818cf8;
+            background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
             border-radius: 10px;
         }
+        
         .typing-indicator {
             display: inline-block;
-            padding: 10px 15px;
-            background: #eef2ff;
-            border-radius: 18px;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 24px;
+            backdrop-filter: blur(5px);
         }
+        
         .typing-dot {
             display: inline-block;
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background: #6366f1;
-            margin-right: 4px;
+            margin-right: 6px;
             animation: typingAnimation 1.4s infinite both;
         }
+        
+        .typing-dot:nth-child(1) { background: #FF9A8B; }
+        .typing-dot:nth-child(2) { background: #FF6B95; animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { background: #FF8E53; animation-delay: 0.4s; }
+        
         @keyframes typingAnimation {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-5px); }
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+            30% { transform: translateY(-8px); opacity: 1; }
         }
+        
         .user-message {
-            background: #4f46e5;
+            background: linear-gradient(45deg, #4776E6 0%, #8E54E9 100%);
             color: white;
-            border-radius: 18px 18px 4px 18px;
+            border-radius: 24px 24px 4px 24px;
             max-width: 80%;
+            box-shadow: 0 4px 15px rgba(71, 118, 230, 0.3);
+            transform-origin: right bottom;
+            animation: messagePop 0.3s ease-out;
         }
+        
         .bot-message {
-            background: #e0e7ff;
-            color: #1e293b;
-            border-radius: 18px 18px 18px 4px;
+            background: linear-gradient(45deg, #ffffff 0%, #f8f9fa 100%);
+            color: #2d3748;
+            border-radius: 24px 24px 24px 4px;
             max-width: 80%;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transform-origin: left bottom;
+            animation: messagePop 0.3s ease-out;
+        }
+        
+        @keyframes messagePop {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .joke-emoji {
+            display: inline-block;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0;
         }
     </style>
 </head>
-<body class="bg-gray-50 h-screen flex flex-col">
-    <header class="bg-indigo-600 text-white p-4 shadow-md">
+<body class="min-h-screen flex flex-col">
+    <header class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-extrabold tracking-tight">JOKEGPT</h1>
-            <div class="flex items-center space-x-2 bg-indigo-700 px-3 py-1 rounded-full">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
+                    <span class="text-2xl">🤣</span>
+                </div>
+                <h1 class="text-2xl font-extrabold tracking-tight text-white">JOKEGPT</h1>
+            </div>
+            <div class="flex items-center space-x-2 bg-white bg-opacity-20 px-3 py-1 rounded-full backdrop-blur-sm">
                 <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span class="text-sm font-medium">Online</span>
             </div>
@@ -63,20 +114,58 @@
     </header>
 
     <main class="flex-1 container mx-auto p-4 overflow-hidden flex flex-col max-w-3xl">
-        <div id="chat-container" class="flex-1 overflow-y-auto mb-4 space-y-3">
+        <!-- Welcome Message -->
+        <div id="welcome-card" class="bg-white bg-opacity-80 backdrop-blur-sm rounded-2xl p-6 mb-4 animate__animated animate__fadeInDown shadow-md">
+            <div class="flex items-center space-x-3 mb-3">
+                <div class="w-12 h-12 bg-gradient-to-r from-yellow-400 to-pink-500 rounded-full flex items-center justify-center text-2xl">
+                    🤡
+                </div>
+                <h2 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">Welcome to JokeGPT!</h2>
+            </div>
+            <p class="text-gray-700 mb-4">I'm your AI comedy buddy! Ask me for dad jokes, puns, or roasts!</p>
+            <div class="grid grid-cols-2 gap-2">
+                <button class="suggestion-btn bg-gradient-to-r from-purple-100 to-indigo-100 hover:from-purple-200 hover:to-indigo-200 text-purple-800 px-3 py-2 rounded-lg text-sm transition-all transform hover:scale-105 active:scale-95">
+                    Tell me a dad joke
+                </button>
+                <button class="suggestion-btn bg-gradient-to-r from-pink-100 to-rose-100 hover:from-pink-200 hover:to-rose-200 text-pink-800 px-3 py-2 rounded-lg text-sm transition-all transform hover:scale-105 active:scale-95">
+                    Make me laugh
+                </button>
+                <button class="suggestion-btn bg-gradient-to-r from-yellow-100 to-amber-100 hover:from-yellow-200 hover:to-amber-200 text-amber-800 px-3 py-2 rounded-lg text-sm transition-all transform hover:scale-105 active:scale-95">
+                    Animal joke please
+                </button>
+                <button class="suggestion-btn bg-gradient-to-r from-blue-100 to-cyan-100 hover:from-blue-200 hover:to-cyan-200 text-blue-800 px-3 py-2 rounded-lg text-sm transition-all transform hover:scale-105 active:scale-95">
+                    Tech humor
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div id="chat-container" class="flex-1 overflow-y-auto mb-4 space-y-4 p-2">
             <!-- Messages will appear here -->
         </div>
 
-        <div class="bg-white rounded-xl shadow-md p-4">
-            <form id="chat-form" class="flex space-x-2">
-                <input type="text" id="user-input" 
-                    class="flex-1 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Ask for a joke about..." autocomplete="off">
+        <!-- Input Area -->
+        <div class="bg-white bg-opacity-80 backdrop-blur-sm rounded-2xl shadow-xl p-4">
+            <form id="chat-form" class="flex gap-3">
+                <div class="flex-1 relative">
+                    <input type="text" id="user-input" 
+                        class="w-full border-0 bg-white bg-opacity-70 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-opacity-90 shadow-sm transition-all duration-300"
+                        placeholder="Ask for a joke about..." autocomplete="off">
+                    <button type="button" id="emoji-btn" class="absolute right-3 top-3 text-gray-400 hover:text-purple-600 transition-colors">
+                        <span class="text-xl">😀</span>
+                    </button>
+                </div>
                 <button type="submit" 
-                    class="bg-indigo-600 text-white px-5 py-3 rounded-xl hover:bg-indigo-700 transition-colors font-medium">
-                    Send
+                    class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-4 rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95 flex items-center">
+                    <span>Send</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                    </svg>
                 </button>
             </form>
+            <div class="mt-2 text-xs text-center text-gray-500">
+                Warning: May cause uncontrollable laughter
+            </div>
         </div>
     </main>
 
@@ -85,33 +174,77 @@
             const chatForm = document.getElementById('chat-form');
             const userInput = document.getElementById('user-input');
             const chatContainer = document.getElementById('chat-container');
+            const welcomeCard = document.getElementById('welcome-card');
+            const suggestionBtns = document.querySelectorAll('.suggestion-btn');
 
             // Add initial bot message
             setTimeout(() => {
-                addMessage("Hey there! I'm JokeGPT. Ask me for any kind of joke - dad jokes, puns, or witty humor!", false);
-            }, 800);
+                addMessage("Hey there! I'm JokeGPT, your AI comedy buddy! What kind of humor are you in the mood for today? 😄", false);
+            }, 1000);
 
-            const addMessage = (text, isUser) => {
+            // Suggestion buttons
+            suggestionBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    userInput.value = btn.textContent.trim();
+                    chatForm.dispatchEvent(new Event('submit'));
+                });
+            });
+
+            // Emoji button (placeholder functionality)
+            document.getElementById('emoji-btn').addEventListener('click', () => {
+                userInput.value += " 😂";
+                userInput.focus();
+            });
+
+            const addMessage = (text, isUser, isWelcome = false) => {
+                if (isWelcome && welcomeCard) {
+                    welcomeCard.classList.add('animate__animated', 'animate__fadeOut');
+                    setTimeout(() => welcomeCard.remove(), 500);
+                }
+
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
                 
                 const bubble = document.createElement('div');
-                bubble.className = `px-4 py-3 ${isUser ? 'user-message' : 'bot-message'} animate__animated ${
+                bubble.className = `px-5 py-3 ${isUser ? 'user-message' : 'bot-message'} animate__animated ${
                     isUser ? 'animate__fadeInRight' : 'animate__fadeInLeft'
                 }`;
-                bubble.textContent = text;
+                
+                // Add emoji animation to joke punchlines
+                if (!isUser && text.includes("?")) {
+                    const parts = text.split("?");
+                    bubble.innerHTML = `
+                        <div class="font-medium">${parts[0]}?</div>
+                        <div class="mt-2 font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+                            ${parts.slice(1).join("?")}
+                            <span class="joke-emoji">😂</span>
+                        </div>
+                    `;
+                } else {
+                    bubble.textContent = text;
+                    if (!isUser) {
+                        bubble.innerHTML += ` <span class="joke-emoji">🎭</span>`;
+                    }
+                }
                 
                 messageDiv.appendChild(bubble);
                 chatContainer.appendChild(messageDiv);
                 chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                // Add confetti for especially funny jokes
+                if (!isUser && (text.includes("😂") || text.includes("🤣"))) {
+                    createConfetti(messageDiv);
+                }
             };
 
-            const showTyping = () => {
+            const showTypingIndicator = () => {
                 const typingDiv = document.createElement('div');
-                typingDiv.className = 'flex justify-start';
+                typingDiv.className = 'flex justify-start animate__animated animate__fadeInLeft';
                 
                 const bubble = document.createElement('div');
-                bubble.className = 'typing-indicator animate__animated animate__fadeInLeft';
+                bubble.className = 'typing-indicator';
+                bubble.id = 'typing-indicator';
                 bubble.innerHTML = `
                     <div class="typing-dot"></div>
                     <div class="typing-dot"></div>
@@ -124,58 +257,37 @@
                 return typingDiv;
             };
 
-            document.addEventListener('DOMContentLoaded', () => {
-    const chatForm = document.getElementById('chat-form');
-    const userInput = document.getElementById('user-input');
-    const chatContainer = document.getElementById('chat-container');
+            const hideTypingIndicator = () => {
+                const indicator = document.getElementById('typing-indicator');
+                if (indicator) {
+                    indicator.parentElement.classList.add('animate__animated', 'animate__fadeOut');
+                    setTimeout(() => indicator.parentElement.remove(), 500);
+                }
+            };
 
-    // Add this function (place it near the top with other helper functions)
-    function ensureJokeResponse(text) {
-        const seriousKeywords = ['sorry', 'cannot', "don't know", "can't", "information"];
-        if (seriousKeywords.some(word => text.toLowerCase().includes(word))) {
-            const fallbackJokes = [
-                "Why don't scientists trust atoms? Because they make up everything!",
-                "I told my wife she was drawing her eyebrows too high. She looked surprised.",
-                "What do you call a fake noodle? An impasta!"
-            ];
-            return fallbackJokes[Math.floor(Math.random() * fallbackJokes.length)];
-        }
-        return text;
-    }
-
-    // Modify the existing fetch handler (look for your form submit event)
-    chatForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const message = userInput.value.trim();
-        if (!message) return;
-
-        addMessage(message, true);
-        userInput.value = '';
-
-        try {
-            const response = await fetch('/chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ message })
-            });
-
-            const data = await response.json();
-            
-            // Replace this line:
-            // addMessage(data.response, false);
-            // With these lines:
-            const jokeResponse = ensureJokeResponse(data.response);
-            addMessage(jokeResponse, false);
-            
-        } catch (error) {
-            addMessage("Failed to connect to the chatbot server", false);
-        }
-    });
-
-    // ... rest of your existing code ...
-});
+            const createConfetti = (parentElement) => {
+                const colors = ['#ff9a9e', '#fad0c4', '#a18cd1', '#fbc2eb', '#ffecd2', '#fcb69f'];
+                for (let i = 0; i < 20; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.left = `${Math.random() * 100}%`;
+                    confetti.style.top = '0';
+                    confetti.style.opacity = '1';
+                    
+                    // Random animation
+                    const animation = confetti.animate([
+                        { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
+                        { transform: `translate(${Math.random() * 200 - 100}px, ${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+                    ], {
+                        duration: 1000 + Math.random() * 2000,
+                        easing: 'cubic-bezier(0.1, 0.8, 0.9, 1)'
+                    });
+                    
+                    parentElement.appendChild(confetti);
+                    animation.onfinish = () => confetti.remove();
+                }
+            };
 
             chatForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -185,7 +297,7 @@
                 addMessage(message, true);
                 userInput.value = '';
                 
-                const typing = showTyping();
+                const typingElement = showTypingIndicator();
 
                 try {
                     const response = await fetch('/chat', {
@@ -197,22 +309,23 @@
                     });
 
                     const data = await response.json();
-                    
-                    // Remove typing indicator
-                    typing.remove();
+                    hideTypingIndicator();
                     
                     if (data.error) {
-                        addMessage(`Error: ${data.error}`, false);
+                        addMessage(`Oops! ${data.error}`, false);
                     } else {
-                        addMessage(data.response, false);
+                        // Simulate typing delay for realism
+                        setTimeout(() => {
+                            addMessage(data.response, false);
+                        }, 500 + Math.random() * 1000);
                     }
                 } catch (error) {
-                    typing.remove();
-                    addMessage("Sorry, I'm having trouble connecting. Try again later!", false);
+                    hideTypingIndicator();
+                    addMessage("My joke generator is feeling shy... Try again soon!", false);
                 }
             });
 
-            // Submit on Enter (but allow Shift+Enter for new lines)
+            // Allow Enter key but prevent Shift+Enter from submitting
             userInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
